@@ -1,71 +1,192 @@
-# G37_grafos_pa26.2 — Rota Mais Rápida (Gama, DF)
+# G37_grafos_pa26.2 — Rota Mais Rápida (Distrito Federal)
+
 **Conteúdo da Disciplina**: Grafos (Algoritmos em Grafos)
 
 ## Alunos
-|Matrícula | Aluno |
-| -- | -- |
+
+| Matrícula | Aluno                       |
+| --------- | --------------------------- |
 | 222006276 | Luís Gustavo Lopes Oliveira |
-| 222006211 | Vitor Valerio Hoffmann |
+| 222006211 | Vitor Valerio Hoffmann      |
 
 ## Sobre
-Este projeto é uma aplicação web desenvolvida em **Python** (FastAPI) e
-**JavaScript/Leaflet.js** para cálculo de rotas mais rápidas dentro do
-Gama-DF, usando dados reais de ruas extraídos do OpenStreetMap.
 
-O sistema modela a malha viária do Gama através de um grafo ponderado, onde
-os cruzamentos são os vértices e as ruas são as arestas com pesos baseados
-no tempo estimado de deslocamento (distância / velocidade da via).
+Aplicação web que calcula a **rota mais rápida entre dois pontos do Distrito
+Federal**, usando a malha viária real do OpenStreetMap. O usuário clica na
+origem e no destino sobre o mapa e recebe o caminho de menor tempo, junto com
+as métricas de execução do algoritmo.
 
-### Funcionalidades do Sistema:
-- **Rota Mínima (Dijkstra)**: encontra a rota de menor tempo entre dois
-  pontos clicados no mapa.
-- **Dados Reais**: a malha viária do Gama é baixada do OpenStreetMap via
-  OSMnx e convertida para uma estrutura de grafo própria.
-- **Visualizador Interativo**: mapa em Leaflet.js que desenha a rota
-  calculada sobre o mapa real, com origem e destino marcados por clique.
+Backend em **Python** (FastAPI), frontend em **React + Vite** com mapa
+**Leaflet**.
 
-## Estrutura do Projeto
-- `backend/`: servidor API FastAPI e algoritmos de grafos (`graph.py`,
-  `dijkstra.py`, `graph_loader.py`).
-- `frontend/`: interface do usuário em HTML5, CSS e JS (`index.html`,
-  `app.js`).
-- `run.py`: sobe backend e frontend juntos com um único comando.
+## Como o problema foi modelado
 
-## Implementação própria vs. bibliotecas
-- **`graph.py`**: estrutura de grafo (lista de adjacência) implementada do
-  zero, além da função de distância haversine.
-- **`dijkstra.py`**: algoritmo de Dijkstra implementado do zero, usando
-  apenas `heapq` (fila de prioridade genérica da biblioteca padrão do
-  Python) como estrutura de apoio.
-- **`graph_loader.py`**: usa a biblioteca **OSMnx** só para *baixar* os
-  dados geográficos reais (cruzamentos, ruas, distâncias) do Gama. Os dados
-  baixados são convertidos para a nossa classe `Grafo`; o algoritmo de busca
-  nunca roda em cima do grafo do `networkx`, só em cima da nossa estrutura.
+A malha viária vira um **grafo dirigido e ponderado**: cruzamentos são os
+vértices (guardando latitude e longitude) e trechos de rua são as arestas. O
+peso de cada aresta é o **tempo de percurso**, não a distância:
+
+```
+tempo (s) = comprimento do trecho (m) ÷ velocidade da via (m/s)
+```
+
+Assim o Dijkstra prefere um desvio maior por via rápida a um caminho curto por
+ruas lentas. Como o grafo é dirigido, ruas de mão única são respeitadas — 17%
+das arestas existem em um sentido só.
+
+O grafo do DF tem **85.584 vértices e 200.373 arestas**, cobrindo todas as
+regiões administrativas.
 
 ## Como Executar
-### Pré-requisitos
-Python 3.9+ e os pacotes listados em `backend/requirements.txt`.
 
-### Passo a passo
-1. Crie e ative um ambiente virtual (evita o erro
-   `externally-managed-environment` no Linux):
+**Pré-requisitos:** Python 3.9+ e Node.js 18+.
+
 ```bash
+# 1. ambiente virtual (evita o erro externally-managed-environment)
 python3 -m venv venv
-source venv/bin/activate  # no Windows: venv\Scripts\activate
-```
-2. Instale as dependências:
-```bash
+source venv/bin/activate      # no Windows: venv\Scripts\activate
+
+# 2. dependências do backend
 pip install -r backend/requirements.txt
-```
-3. Suba backend e frontend juntos:
-```bash
+
+# 3. dependências do frontend (só na primeira vez)
+cd frontend && npm install && cd ..
+
+# 4. sobe backend e frontend juntos (Ctrl+C para parar os dois)
 python run.py
 ```
-Na primeira execução, o download do grafo do Gama via OSMnx pode demorar um
-pouco (minutos, dependendo da conexão) — depois disso ele fica salvo em cache
-(`backend/gama_cache.pkl`) e carrega instantâneo nas próximas vezes.
 
-4. Acesse a Interface Web:
-Abra seu navegador em **[http://127.0.0.1:5500](http://127.0.0.1:5500)**.
-A API fica disponível em **[http://127.0.0.1:8000](http://127.0.0.1:8000)**,
-com documentação automática em `http://127.0.0.1:8000/docs`.
+Abra **[http://127.0.0.1:5500](http://127.0.0.1:5500)**. A API fica em
+`http://127.0.0.1:8000`, com documentação automática em `/docs`.
+
+> **Primeira execução:** o download da malha do DF leva cerca de 1 minuto. A
+> interface mostra "Aguardando a API…" e se conecta sozinha quando o backend
+> fica pronto — não precisa recarregar. Depois o grafo fica em cache
+> (`backend/grafos/`, ~8 MB) e carrega em ~1 segundo.
+
+## Como Usar
+
+1. **Clique na origem** em qualquer ponto do mapa — marcador **verde**.
+2. **Clique no destino** — marcador **vermelho**, e o cálculo começa na hora.
+3. **A rota aparece em azul** e o mapa se reenquadra para mostrá-la inteira.
+4. **Para testar outra**, é só clicar de novo: o terceiro clique começa uma
+   busca nova. O botão **Limpar** também zera tudo.
+
+Não precisa clicar em cima de uma rua — o sistema acha o cruzamento mais
+próximo do ponto clicado.
+
+### As métricas
+
+| Métrica                 | O que é                                                       |
+| ----------------------- | ------------------------------------------------------------- |
+| Tempo estimado          | Soma dos pesos do caminho — a viagem prevista pelo modelo.    |
+| Nós visitados           | Vértices que o Dijkstra tirou da fila. Mede o esforço dele.   |
+| Cálculo do Dijkstra     | Tempo só do algoritmo, sem rede.                              |
+
+"Nós visitados" cresce muito com a distância: uma rota curta dentro do Plano
+Piloto visita ~2 mil nós (6 ms), enquanto Gama → Planaltina visita **84 mil
+dos 85 mil vértices** (421 ms). Isso mostra na prática o Dijkstra explorando
+em todas as direções, sem saber onde fica o destino — a deixa natural para
+comparar com A\*.
+
+## A API
+
+**`POST /rota`** — recebe origem e destino, devolve o caminho mínimo:
+
+```bash
+curl -X POST http://127.0.0.1:8000/rota -H "Content-Type: application/json" \
+  -d '{"origem_lat":-16.0192,"origem_lon":-48.0642,
+       "destino_lat":-15.7942,"destino_lon":-47.8822}'
+```
+
+```json
+{
+  "caminho_coordenadas": [[-16.0188, -48.0644], "..."],
+  "tempo_estimado_segundos": 1717.7,
+  "nos_visitados": 44929,
+  "tempo_calculo_ms": 161.7
+}
+```
+
+Devolve **404** quando não há caminho entre os pontos.
+
+**`GET /status`** — região carregada e tamanho do grafo:
+
+```json
+{ "regiao": "Distrito Federal, Brazil", "nos": 85584, "arestas": 200373 }
+```
+
+## Estrutura do Projeto
+
+```
+backend/
+├── graph.py           estrutura de grafo, haversine e índice espacial
+├── dijkstra.py        algoritmo de caminho mínimo
+├── graph_loader.py    download do OpenStreetMap, conversão e cache
+└── main.py            API FastAPI
+frontend/src/
+├── App.jsx            estado da aplicação
+├── api.js             chamadas à API
+└── components/        Mapa.jsx, PainelRota.jsx, CardResultado.jsx
+run.py                 sobe backend e frontend juntos
+```
+
+## Implementação própria vs. bibliotecas
+
+**Escrito do zero:**
+
+- **`graph.py`** — a classe `Grafo` em lista de adjacência, a distância
+  `haversine` e o `IndiceEspacial`, uma grade que acha o cruzamento mais
+  próximo de um clique visitando anéis de células ao redor dele. Sem ele cada
+  clique compararia o ponto com os 85 mil vértices: são 67 ms de varredura
+  linear contra 0,91 ms com a grade, duas vezes por requisição.
+- **`dijkstra.py`** — o algoritmo completo, com fila de prioridade e
+  reconstrução do caminho pelos predecessores. A única estrutura de apoio é o
+  `heapq` da biblioteca padrão.
+
+**Bibliotecas, e só para isso:** o **OSMnx** baixa os dados geográficos do
+OpenStreetMap; eles são convertidos para a nossa classe `Grafo` e **a busca
+nunca roda sobre o grafo do `networkx`**. **FastAPI** serve a API e
+**React/Leaflet** desenham a interface.
+
+## Trocando a região
+
+Por padrão carrega o DF inteiro. Para rodar sobre uma região menor:
+
+```bash
+REGIAO_OSM="Gama, Brasilia, Brazil" python run.py
+```
+
+Cada região tem seu cache próprio, então dá para alternar sem baixar de novo.
+O Gama sozinho tem 5.372 vértices — cerca de 1/16 do DF.
+
+## Rodando as partes separadas
+
+```bash
+python backend/main.py             # só a API
+cd frontend && npm run dev         # só a interface
+cd backend && python dijkstra.py   # só o algoritmo, num grafo de teste
+```
+
+O `dijkstra.py` roda sobre um grafo de 4 vértices, sem OSMnx nem rede — bom
+para verificar o algoritmo isolado.
+
+## Problemas comuns
+
+| Sintoma                                    | Solução                                          |
+| ------------------------------------------ | ------------------------------------------------ |
+| `externally-managed-environment` no `pip`  | Faltou ativar o venv (passo 1).                  |
+| `Dependencias do frontend ausentes`        | Faltou o `npm install` (passo 3).                |
+| `Address already in use`                   | Encerre a execução anterior nas portas 8000/5500.|
+| Rota com erro após mexer no código         | Apague `backend/grafos/*.pkl` e rode de novo.    |
+
+## Limitações conhecidas
+
+- **Velocidades imprecisas:** só 12% das vias do DF têm velocidade cadastrada
+  no OpenStreetMap; as outras usam um padrão de 40 km/h. Na prática o tempo
+  estimado é guiado mais pela distância do que pela velocidade real.
+- **Sem trânsito:** o modelo é estático — não considera horário de pico,
+  semáforos nem obras.
+
+Evoluções naturais: **A\*** com heurística de distância em linha reta (a
+métrica de nós visitados já está pronta para a comparação) e estimar a
+velocidade pelo tipo da via em vez de usar 40 km/h para tudo.

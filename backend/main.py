@@ -4,9 +4,9 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dijkstra import dijkstra
-from graph_loader import baixar_grafo_osm, no_mais_proximo
+from graph_loader import LOCAL_PADRAO, baixar_grafo_osm
 
-app = FastAPI(title="Rota Mais Rapida - Gama DF")
+app = FastAPI(title="Rota Mais Rapida - Distrito Federal")
 
 app.add_middleware(
     CORSMiddleware,
@@ -40,8 +40,11 @@ class RespostaRota(BaseModel):
 
 @app.post("/rota", response_model=RespostaRota)
 def calcular_rota(pedido: PedidoRota):
-    no_origem = no_mais_proximo(grafo, pedido.origem_lat, pedido.origem_lon)
-    no_destino = no_mais_proximo(grafo, pedido.destino_lat, pedido.destino_lon)
+    no_origem = grafo.no_mais_proximo(pedido.origem_lat, pedido.origem_lon)
+    no_destino = grafo.no_mais_proximo(pedido.destino_lat, pedido.destino_lon)
+
+    if no_origem is None or no_destino is None:
+        raise HTTPException(status_code=404, detail="Nenhum cruzamento encontrado perto desses pontos.")
 
     inicio = time.perf_counter()
     caminho, custo, visitados = dijkstra(grafo, no_origem, no_destino)
@@ -63,6 +66,7 @@ def calcular_rota(pedido: PedidoRota):
 @app.get("/status")
 def status():
     return {
+        "regiao": LOCAL_PADRAO,
         "nos": grafo.numero_de_nos() if grafo else 0,
         "arestas": grafo.numero_de_arestas() if grafo else 0,
     }

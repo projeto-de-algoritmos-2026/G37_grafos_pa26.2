@@ -1,0 +1,349 @@
+:root {
+  --fundo: #ffffff;
+  --fundo-sutil: #f5f7fa;
+  --fundo-elevado: #ffffff;
+  --borda: #e2e6ec;
+  --texto: #101720;
+  --texto-fraco: #5f6b7a;
+  --acento: #2563eb;
+  --acento-suave: #eff4ff;
+  --origem: #059669;
+  --destino: #e11d48;
+  --erro-fundo: #fef2f2;
+  --erro-texto: #b91c1c;
+  --erro-borda: #fecaca;
+  --sombra: 0 1px 2px rgba(16, 23, 32, 0.06), 0 8px 24px rgba(16, 23, 32, 0.06);
+  --raio: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fundo: #0e1319;
+    --fundo-sutil: #151b23;
+    --fundo-elevado: #1a222c;
+    --borda: #262f3a;
+    --texto: #e8edf3;
+    --texto-fraco: #93a1b1;
+    --acento: #60a5fa;
+    --acento-suave: #16233a;
+    --origem: #34d399;
+    --destino: #fb7185;
+    --erro-fundo: #2a1416;
+    --erro-texto: #fca5a5;
+    --erro-borda: #4c1d1d;
+    --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  color: var(--texto);
+  background: var(--fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  height: 100%;
+}
+
+.mapa-area {
+  position: relative;
+  height: 100%;
+}
+
+.mapa {
+  height: 100%;
+  width: 100%;
+  background: var(--fundo-sutil);
+}
+
+/* ---------- painel lateral ---------- */
+
+.painel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--fundo);
+  border-right: 1px solid var(--borda);
+  z-index: 500;
+  overflow-y: auto;
+}
+
+.painel__topo {
+  padding: 24px 22px 18px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.painel__titulo {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.painel__subtitulo {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--texto-fraco);
+}
+
+.painel__corpo {
+  flex: 1;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.painel__rodape {
+  padding: 14px 22px;
+  border-top: 1px solid var(--borda);
+  display: flex;
+  gap: 18px;
+  font-size: 12px;
+  color: var(--texto-fraco);
+}
+
+.rodape__stat b {
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.rodape__stat--offline {
+  color: var(--erro-texto);
+}
+
+.instrucao {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--texto-fraco);
+}
+
+/* ---------- origem / destino ---------- */
+
+.pontos {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pontos__conector {
+  position: absolute;
+  left: 5px;
+  top: 26px;
+  width: 2px;
+  height: 22px;
+  background: var(--borda);
+}
+
+.ponto {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  opacity: 0.65;
+  transition: opacity 0.15s ease;
+}
+
+.ponto--ativo {
+  opacity: 1;
+}
+
+.ponto__marca {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+  border: 2px solid var(--fundo);
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.ponto__marca--origem {
+  background: var(--origem);
+  color: var(--origem);
+}
+
+.ponto__marca--destino {
+  background: var(--destino);
+  color: var(--destino);
+}
+
+.ponto__rotulo {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--texto-fraco);
+  font-weight: 600;
+}
+
+.ponto__valor {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+
+/* ---------- resultado ---------- */
+
+.resultado {
+  background: var(--fundo-sutil);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.resultado__linha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  border-top: 1px solid var(--borda);
+  padding-top: 12px;
+}
+
+.resultado__nota {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--texto-fraco);
+}
+
+.metrica__valor {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+
+.metrica--destaque .metrica__valor {
+  font-size: 32px;
+  color: var(--acento);
+}
+
+.metrica__unidade {
+  font-size: 0.55em;
+  font-weight: 550;
+  color: var(--texto-fraco);
+}
+
+.metrica__rotulo {
+  font-size: 11px;
+  color: var(--texto-fraco);
+  margin-top: 2px;
+}
+
+/* ---------- estados ---------- */
+
+.carregando {
+  height: 3px;
+  background: var(--borda);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.carregando__barra {
+  display: block;
+  height: 100%;
+  width: 40%;
+  background: var(--acento);
+  border-radius: 99px;
+  animation: desliza 1s ease-in-out infinite;
+}
+
+@keyframes desliza {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+
+.erro {
+  background: var(--erro-fundo);
+  border: 1px solid var(--erro-borda);
+  color: var(--erro-texto);
+  border-radius: var(--raio);
+  padding: 11px 13px;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.botao {
+  margin-top: auto;
+  padding: 10px 14px;
+  border: 1px solid var(--borda);
+  background: var(--fundo-elevado);
+  color: var(--texto);
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 550;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.botao:hover:not(:disabled) {
+  background: var(--acento-suave);
+  border-color: var(--acento);
+}
+
+.botao:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* ---------- pinos no mapa ---------- */
+
+.pino {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+
+.pino--origem {
+  background: #059669;
+}
+
+.pino--destino {
+  background: #e11d48;
+}
+
+/* ---------- responsivo ---------- */
+
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .painel {
+    border-right: none;
+    border-bottom: 1px solid var(--borda);
+    max-height: 45vh;
+  }
+
+  .botao {
+    margin-top: 0;
+  }
+}

@@ -1,11 +1,23 @@
 import os
 import pickle
+import re
+
 import osmnx as ox
-from graph import Grafo, distancia_haversine
+from graph import Grafo
 
-CACHE_PATH = os.path.join(os.path.dirname(__file__), "gama_cache.pkl")
+DIR_CACHE = os.path.join(os.path.dirname(__file__), "grafos")
 
-LOCAL_PADRAO = "Gama, Brasília, Brazil"
+# Cobre todo o Distrito Federal: Plano Piloto, Gama, Taguatinga, Ceilandia,
+# Sobradinho e as demais regioes administrativas. Da para apontar para uma
+# regiao menor (util em demonstracoes) com a variavel de ambiente REGIAO_OSM,
+# por exemplo: REGIAO_OSM="Gama, Brasilia, Brazil" python main.py
+LOCAL_PADRAO = os.environ.get("REGIAO_OSM", "Distrito Federal, Brazil")
+
+
+def _caminho_cache(local: str) -> str:
+    # Um arquivo por regiao: trocar de regiao nao invalida o cache da anterior.
+    apelido = re.sub(r"[^a-z0-9]+", "-", local.lower()).strip("-")
+    return os.path.join(DIR_CACHE, f"grafo-{apelido}.pkl")
 
 
 def _velocidade_padrao_kmh(dados_aresta: dict) -> float:
@@ -24,11 +36,20 @@ def _velocidade_padrao_kmh(dados_aresta: dict) -> float:
 
 
 def baixar_grafo_osm(local: str = LOCAL_PADRAO, usar_cache: bool = True) -> Grafo:
-    if usar_cache and os.path.exists(CACHE_PATH):
-        with open(CACHE_PATH, "rb") as f:
-            return pickle.load(f)
+    caminho_cache = _caminho_cache(local)
 
-    print(f"Baixando malha viaria de: {local} (pode demorar um pouco)...")
+    if usar_cache and os.path.exists(caminho_cache):
+        print(f"Carregando grafo de {local} do cache...")
+        with open(caminho_cache, "rb") as f:
+            grafo = pickle.load(f)
+        print(
+            f"Grafo carregado: {grafo.numero_de_nos()} nos, "
+            f"{grafo.numero_de_arestas()} arestas."
+        )
+        return grafo
+
+    print(f"Baixando malha viaria de: {local}")
+    print("Na primeira execucao isso leva alguns minutos. Depois fica em cache.")
     grafo_osm = ox.graph_from_place(local, network_type="drive")
 
     grafo = Grafo()
@@ -47,7 +68,8 @@ def baixar_grafo_osm(local: str = LOCAL_PADRAO, usar_cache: bool = True) -> Graf
         tempo_segundos = comprimento_m / velocidade_ms
         grafo.adicionar_aresta(origem, destino, tempo_segundos)
 
-    with open(CACHE_PATH, "wb") as f:
+    os.makedirs(DIR_CACHE, exist_ok=True)
+    with open(caminho_cache, "wb") as f:
         pickle.dump(grafo, f)
 
     print(
@@ -55,19 +77,6 @@ def baixar_grafo_osm(local: str = LOCAL_PADRAO, usar_cache: bool = True) -> Graf
         f"{grafo.numero_de_arestas()} arestas."
     )
     return grafo
-
-
-def no_mais_proximo(grafo: Grafo, lat: float, lon: float) -> int:
-    no_mais_perto = None
-    menor_distancia = float("inf")
-
-    for no_id, coord in grafo.coordenadas.items():
-        distancia = distancia_haversine(coord, (lat, lon))
-        if distancia < menor_distancia:
-            menor_distancia = distancia
-            no_mais_perto = no_id
-
-    return no_mais_perto
 
 
 if __name__ == "__main__":
