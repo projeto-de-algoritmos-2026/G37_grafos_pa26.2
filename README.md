@@ -130,9 +130,8 @@ frontend/src/
 run.py                 sobe backend e frontend juntos
 ```
 
-## Implementação própria vs. bibliotecas
+## Implementação
 
-**Escrito do zero:**
 
 - **`graph.py`** — a classe `Grafo` em lista de adjacência, a distância
   `haversine` e o `IndiceEspacial`, uma grade que acha o cruzamento mais
@@ -143,7 +142,7 @@ run.py                 sobe backend e frontend juntos
   reconstrução do caminho pelos predecessores. A única estrutura de apoio é o
   `heapq` da biblioteca padrão.
 
-**Bibliotecas, e só para isso:** o **OSMnx** baixa os dados geográficos do
+**Bibliotecas**: o **OSMnx** baixa os dados geográficos do
 OpenStreetMap; eles são convertidos para a nossa classe `Grafo` e **a busca
 nunca roda sobre o grafo do `networkx`**. **FastAPI** serve a API e
 **React/Leaflet** desenham a interface.
@@ -170,23 +169,3 @@ cd backend && python dijkstra.py   # só o algoritmo, num grafo de teste
 O `dijkstra.py` roda sobre um grafo de 4 vértices, sem OSMnx nem rede — bom
 para verificar o algoritmo isolado.
 
-## Problemas comuns
-
-| Sintoma                                    | Solução                                          |
-| ------------------------------------------ | ------------------------------------------------ |
-| `externally-managed-environment` no `pip`  | Faltou ativar o venv (passo 1).                  |
-| `Dependencias do frontend ausentes`        | Faltou o `npm install` (passo 3).                |
-| `Address already in use`                   | Encerre a execução anterior nas portas 8000/5500.|
-| Rota com erro após mexer no código         | Apague `backend/grafos/*.pkl` e rode de novo.    |
-
-## Limitações conhecidas
-
-- **Velocidades imprecisas:** só 12% das vias do DF têm velocidade cadastrada
-  no OpenStreetMap; as outras usam um padrão de 40 km/h. Na prática o tempo
-  estimado é guiado mais pela distância do que pela velocidade real.
-- **Sem trânsito:** o modelo é estático — não considera horário de pico,
-  semáforos nem obras.
-
-Evoluções naturais: **A\*** com heurística de distância em linha reta (a
-métrica de nós visitados já está pronta para a comparação) e estimar a
-velocidade pelo tipo da via em vez de usar 40 km/h para tudo.
